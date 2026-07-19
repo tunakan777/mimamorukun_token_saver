@@ -17,24 +17,26 @@ router.post('/github', async (req, res) => {
       return res.status(400).json({ error: 'codeとredirectUriが必要です' })
     }
 
-    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify({
-        client_id: GITHUB_CLIENT_ID,
-        client_secret: GITHUB_CLIENT_SECRET,
-        code,
-        redirect_uri: redirectUri
-      })
-    })
+   const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    client_secret: DISCORD_CLIENT_SECRET,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: redirectUri
+  })
+})
 
-    const tokenData = await tokenRes.json()
-    if (tokenData.error) {
-      return res.status(400).json({ error: tokenData.error_description })
-    }
+const tokenData = await tokenRes.json()
+console.log('[discord] tokenData:', JSON.stringify(tokenData))
+console.log('[discord] redirectUri:', redirectUri)
+console.log('[discord] client_id:', DISCORD_CLIENT_ID)
+
+if (!tokenData.access_token) {
+  return res.status(400).json({ error: 'Discordトークン取得失敗' })
+}
 
     const userRes = await fetch('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` }
